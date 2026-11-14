@@ -1,1 +1,45 @@
 
+
+name: Build My SimpMusic APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout official dev source
+        uses: actions/checkout@v4
+        with:
+          repository: maxrave-dev/SimpMusic
+          ref: dev
+          submodules: recursive
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version: 21
+          cache: gradle
+
+      - name: Configure Full build
+        run: echo "isFullBuild=true" >> gradle.properties
+
+      - name: Generate library definitions
+        run: ./gradlew exportLibraryDefinitions
+
+      - name: Build APK
+        run: ./gradlew androidApp:assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SimpMusic-Full-APK
+          path: androidApp/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
